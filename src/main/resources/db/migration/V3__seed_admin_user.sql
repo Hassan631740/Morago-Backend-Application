@@ -1,0 +1,37 @@
+-- -- V3: Seed initial admin user
+-- -- Password: Admin@123 (example). Replace with a secure hash in production.
+-- -- BCrypt hash for 'Admin@123' generated with strength 10
+-- -- $2a$10$7V3u5xzvLh7E5s7zX3wJROmYh3P2bJ8lqQbI1m0wU0QfF2ZQWw5rG
+--
+-- -- Ensure compatibility: add/relax `email` column if needed
+-- SET @email_col_exists := (
+--     SELECT COUNT(*)
+--     FROM information_schema.COLUMNS
+--     WHERE TABLE_SCHEMA = DATABASE()
+--       AND TABLE_NAME = 'users'
+--       AND COLUMN_NAME = 'email'
+-- );
+--
+-- SET @ddl := IF(@email_col_exists = 0,
+--     'ALTER TABLE users ADD COLUMN email VARCHAR(255) NULL',
+--     'ALTER TABLE users MODIFY COLUMN email VARCHAR(255) NULL'
+-- );
+-- PREPARE stmt FROM @ddl;
+-- EXECUTE stmt;
+-- DEALLOCATE PREPARE stmt;
+--
+-- -- Compose an idempotent insert using only `password` column
+-- SET @ins := CONCAT(
+--     'INSERT INTO users (phone, password, first_name, last_name, is_active, is_debtor, created_at, updated_at) ',
+--     'VALUES (''+10000000000'', ''$2a$10$7V3u5xzvLh7E5s7zX3wJROmYh3P2bJ8lqQbI1m0wU0QfF2ZQWw5rG'', ''Admin'', ''User'', TRUE, FALSE, NOW(), NOW()) ',
+--     'ON DUPLICATE KEY UPDATE id = id'
+-- );
+-- PREPARE ins_stmt FROM @ins;
+-- EXECUTE ins_stmt;
+-- DEALLOCATE PREPARE ins_stmt;
+--
+-- -- Assign ADMINISTRATOR role
+-- INSERT IGNORE INTO user_roles (user_id, role)
+-- SELECT u.id, 'ADMINISTRATOR'
+-- FROM users u
+-- WHERE u.phone = '+10000000000';

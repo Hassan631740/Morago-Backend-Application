@@ -1,0 +1,5 @@
+-- -- V4: Add verification field to translator profiles
+--
+-- ALTER TABLE translator_profiles
+-- ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+--

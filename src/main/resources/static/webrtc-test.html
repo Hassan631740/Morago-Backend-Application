@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebRTC + Socket.IO Test</title>
+</head>
+<body>
+<h2>Login</h2>
+<label for="phone">Phone:</label>
+<input type="text" id="phone">
+<label for="password">Password:</label>
+<input type="password" id="password">
+<button id="loginBtn">Login</button>
+<p id="loginStatus"></p>
+
+<h2>Local Video</h2>
+<video id="localVideo" autoplay muted playsinline></video>
+
+<h2>Remote Videos</h2>
+<div id="remoteVideos"></div>
+
+<h2>Participants</h2>
+<ul id="participants"></ul>
+
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"
+        integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
+        crossorigin="anonymous"></script>
+<script>
+  let jwtToken = null;
+  let socket;
+  const roomId = "room1";
+  const userId = "user_" + Math.floor(Math.random() * 1000);
+  let localStream;
+  const peers = {}; // remoteUserId -> RTCPeerConnection
+
+  // Login button click
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const phone = document.getElementById("phone").value;
+    const password = document.getElementById("password").value;
+
+    console.log("Attempting login with phone:", phone);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password })
+      });
+
+      if (!response.ok) throw new Error("Login failed");
+      const data = await response.json();
+      jwtToken = data.token;
+      console.log("✅ JWT Token received:", jwtToken);
+
+      document.getElementById("loginStatus").textContent = "✅ Login successful!";
+      await initLocalStream(); // Ensure local stream is ready
+      connectSocket();
+    } catch (err) {
+      document.getElementById("loginStatus").textContent = "❌ Login failed: " + err.message;
+    }
+  });
+
+  // Initialize local media
+  async function initLocalStream() {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById("localVideo").srcObject = localStream;
+      console.log("✅ Local stream initialized");
+    } catch (err) {
+      console.error("Failed to get local media:", err);
+    }
+  }
+
+  // Connect to Socket.IO signaling server
+  function connectSocket() {
+    console.log("Connecting to Socket.IO server with JWT:", jwtToken);
+
+    socket = io("http://localhost:8080", { auth: { token: jwtToken } });
+
+    socket.on("connect", () => {
+      console.log("✅ Connected to Socket.IO server");
+      socket.emit("join", { roomId, userId });
+    });
+
+    socket.on("connect_error", (err) => console.error("❌ Socket.IO connection error:", err));
+
+    // Update participants list
+    socket.on("participant-status", data => {
+      console.log("Participants update:", data);
+      const list = document.getElementById("participants");
+      list.innerHTML = "";
+
+      for (let id in data) {
+        const li = document.createElement("li");
+        li.textContent = `${id}: ${data[id]}`;
+        list.appendChild(li);
+
+        if (id !== userId && !peers[id]) {
+          createPeerConnection(id, true); // Offerer
+        }
+      }
+
+      // Remove disconnected peers
+      Object.keys(peers).forEach(id => {
+        if (!data[id]) {
+          peers[id].close();
+          delete peers[id];
+          const videoDiv = document.getElementById("remoteVideo_" + id);
+          if (videoDiv) videoDiv.remove();
+        }
+      });
+    });
+
+    // Handle incoming offer
+    socket.on("offer", async data => {
+      const remoteId = data.userId;
+      if (remoteId === userId) return;
+
+      if (!peers[remoteId]) createPeerConnection(remoteId, false); // Answerer
+      const pc = peers[remoteId];
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("answer", { roomId, userId, targetId: remoteId, sdp: answer });
+      } catch (err) {
+        console.error("Error handling offer:", err);
+      }
+    });
+
+    // Handle incoming answer
+    socket.on("answer", async data => {
+      const remoteId = data.userId;
+      if (remoteId === userId) return;
+
+      const pc = peers[remoteId];
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      } catch (err) {
+        console.error("Error handling answer:", err);
+      }
+    });
+
+    // Handle incoming ICE candidate
+    socket.on("candidate", async data => {
+      const remoteId = data.userId;
+      if (remoteId === userId) return;
+
+      const pc = peers[remoteId];
+      try {
+        await pc.addIceCandidate(data.candidate);
+      } catch (err) {
+        console.error("Error adding ICE candidate:", err);
+      }
+    });
+  }
+
+  // Create peer connection
+  function createPeerConnection(remoteUserId, isOfferer) {
+    if (!localStream) {
+      console.warn("Local stream not ready yet. Skipping peer connection for", remoteUserId);
+      return;
+    }
+
+    const pc = new RTCPeerConnection();
+
+    // Add local tracks
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+    // Handle remote tracks
+    pc.ontrack = event => {
+      let video = document.getElementById("remoteVideo_" + remoteUserId);
+      if (!video) {
+        video = document.createElement("video");
+        video.id = "remoteVideo_" + remoteUserId;
+        video.autoplay = true;
+        document.getElementById("remoteVideos").appendChild(video);
+      }
+      video.srcObject = event.streams[0];
+    };
+
+    // Handle ICE candidates
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        socket.emit("candidate", { roomId, userId, targetId: remoteUserId, candidate: event.candidate });
+      }
+    };
+
+    peers[remoteUserId] = pc;
+
+    // If offerer, create and send offer
+    if (isOfferer) {
+      pc.createOffer().then(offer => {
+        pc.setLocalDescription(offer).then(() => {
+          socket.emit("offer", { roomId, userId, targetId: remoteUserId, sdp: offer });
+        }).catch(err => console.error("Error setting local description:", err));
+      }).catch(err => console.error("Error creating offer:", err));
+    }
+  }
+</script>
+</body>
+</html>
