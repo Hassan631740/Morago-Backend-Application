@@ -1,0 +1,15 @@
+# Nixpacks configuration for Railway deployment
+# This file configures the build process for the Spring Boot application
+
+[phases.setup]
+nixPkgs = ["...", "maven", "openjdk21"]
+
+[phases.build]
+cmds = ["mvn clean package -DskipTests -Dmaven.javadoc.skip=true"]
+
+[phases.install]
+dependsOn = ["build"]
+
+[start]
+cmd = "java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/morago-backend-0.0.1-SNAPSHOT.jar"
+

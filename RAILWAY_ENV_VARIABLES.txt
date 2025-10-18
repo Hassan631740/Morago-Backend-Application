@@ -1,0 +1,89 @@
+# ====================================================================
+# RAILWAY ENVIRONMENT VARIABLES - COPY & PASTE
+# ====================================================================
+# Copy these variables to Railway Dashboard → Your Project → Variables
+# Replace placeholder values with your actual secrets
+# ====================================================================
+
+# --------------------------------------------------------------------
+# SPRING CONFIGURATION
+# --------------------------------------------------------------------
+SPRING_PROFILES_ACTIVE=railway
+
+# --------------------------------------------------------------------
+# DATABASE CONFIGURATION (Using Railway MySQL)
+# --------------------------------------------------------------------
+# Railway provides: MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD
+# Use reference variables like this:
+DATABASE_URL=jdbc:mysql://${{MYSQLHOST}}:${{MYSQLPORT}}/${{MYSQLDATABASE}}?useSSL=true&allowPublicKeyRetrieval=true&serverTimezone=UTC
+DB_USERNAME=${{MYSQLUSER}}
+DB_PASSWORD=${{MYSQLPASSWORD}}
+DB_DRIVER=com.mysql.cj.jdbc.Driver
+DB_DIALECT=org.hibernate.dialect.MySQLDialect
+
+# --------------------------------------------------------------------
+# JWT CONFIGURATION
+# --------------------------------------------------------------------
+# Generate secret: openssl rand -base64 64
+JWT_EXPIRATION=86400000
+JWT_EXPIRATION_MS=3600000
+SECURITY_JWT_SECRET=YOUR_SECURE_JWT_SECRET_HERE_BASE64_ENCODED
+
+# --------------------------------------------------------------------
+# SOCKET.IO CONFIGURATION
+# --------------------------------------------------------------------
+SOCKETIO_HOST=0.0.0.0
+SOCKETIO_PORT=9092
+SOCKETIO_ALLOWED_ORIGINS=https://your-frontend-domain.com,http://localhost:5173
+
+# --------------------------------------------------------------------
+# FILE UPLOAD CONFIGURATION
+# --------------------------------------------------------------------
+MAX_FILE_SIZE=10MB
+MAX_REQUEST_SIZE=10MB
+
+# --------------------------------------------------------------------
+# AWS S3 CONFIGURATION (Optional - for file storage)
+# --------------------------------------------------------------------
+# AWS_S3_BUCKET=your-bucket-name
+# AWS_S3_REGION=us-east-1
+# AWS_S3_ACCESS_KEY=your-aws-access-key
+# AWS_S3_SECRET_KEY=your-aws-secret-key
+# AWS_S3_ENDPOINT=
+# AWS_S3_BASE_URL=https://your-bucket.s3.amazonaws.com
+
+# ====================================================================
+# GENERATE JWT SECRET
+# ====================================================================
+# Run this command in terminal to generate a secure JWT secret:
+# 
+#   openssl rand -base64 64
+# 
+# Then copy the output and paste it as SECURITY_JWT_SECRET value
+# ====================================================================
+
+# ====================================================================
+# RAILWAY MYSQL DATABASE INFO
+# ====================================================================
+# After adding MySQL to Railway, you'll see these auto-generated variables:
+# 
+# MYSQLHOST      - Database hostname
+# MYSQLPORT      - Database port (usually 3306)
+# MYSQLDATABASE  - Database name (usually "railway")
+# MYSQLUSER      - Database username (usually "root")
+# MYSQLPASSWORD  - Auto-generated secure password
+# MYSQL_URL      - Full MySQL connection URL
+# 
+# You don't need to manually set these - Railway provides them automatically!
+# ====================================================================
+
+# ====================================================================
+# IMPORTANT SECURITY NOTES
+# ====================================================================
+# 1. Never commit secrets to Git
+# 2. Use Railway's Variables feature for all secrets
+# 3. Rotate JWT secret regularly
+# 4. Use strong, unique passwords
+# 5. Limit CORS origins to your actual domains
+# ====================================================================
+
