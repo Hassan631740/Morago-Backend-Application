@@ -57,17 +57,22 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-resources/**", "/configuration/**", "/webjars/**", "/actuator/**","/h2-console/**").permitAll()
                         // Allow other public endpoints
-                        .requestMatchers("/", "/api/auth/**", "/api/tokens/**", "/webrtc-test.html", "/socket.io/**", "/actuator/**").permitAll()
+                        .requestMatchers("/", "/api/auth/**", "/api/tokens/**", "/api/password-resets/**", "/webrtc-test.html", "/socket.io/**", "/actuator/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
                         .requestMatchers("/api/roles/**").hasRole("ADMINISTRATOR")
-                        .requestMatchers("/api/users/**").hasAnyRole("ADMINISTRATOR")
+                        // Allow authenticated users to access their own profile and change password
+                        .requestMatchers("/api/users/deposit").hasRole("CLIENT")
+                        .requestMatchers("/api/users/me", "/api/users/password", "/api/users/balance").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
+                        .requestMatchers("/api/users/**").hasRole("ADMINISTRATOR")
                         .requestMatchers("/api/translator-profiles/**").hasAnyRole("INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/calls/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/ratings/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/deposits/**", "/api/withdrawals/**").hasRole("ADMINISTRATOR")
                         .requestMatchers("/api/categories/**", "/api/languages/**", "/api/themes/**").hasRole("ADMINISTRATOR")
                         .requestMatchers("/api/debtors/**").hasRole("ADMINISTRATOR")
-                        .requestMatchers("/api/files/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
+                        .requestMatchers("/api/files/**", "/api/file-resources/**").hasRole("ADMINISTRATOR")
+                        .requestMatchers("/api/uploads/themes/**").hasRole("ADMINISTRATOR")
+                        .requestMatchers("/api/uploads/**").authenticated()
                         .requestMatchers("/api/notifications/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
                         .anyRequest().authenticated()
                 )
@@ -108,4 +113,3 @@ public class SecurityConfig {
         return converter;
     }
 }
-
