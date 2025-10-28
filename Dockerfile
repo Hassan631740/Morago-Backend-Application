@@ -54,15 +54,35 @@ ENV SPRING_PROFILES_ACTIVE=railway
 RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'set -e' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
-    echo '# Extract database credentials from environment variables' >> /app/start.sh && \
+    echo '# Build JDBC URL and credentials for Flyway' >> /app/start.sh && \
+    echo 'FLYWAY_USER="${DB_USERNAME:-${MYSQLUSER:-}}"' >> /app/start.sh && \
+    echo 'FLYWAY_PASSWORD="${DB_PASSWORD:-${MYSQLPASSWORD:-}}"' >> /app/start.sh && \
     echo 'if [ -n "$DATABASE_URL" ]; then' >> /app/start.sh && \
-    echo '  DB_URL="$DATABASE_URL"' >> /app/start.sh && \
+    echo '  RAW_URL="$DATABASE_URL"' >> /app/start.sh && \
+    echo '  # Normalize to mysql:// if jdbc given for parsing' >> /app/start.sh && \
+    echo '  TMP_URL="$RAW_URL"' >> /app/start.sh && \
+    echo '  TMP_URL="${TMP_URL#jdbc:}"' >> /app/start.sh && \
+    echo '  # Extract creds and host parts: mysql://user:pass@host:port/db' >> /app/start.sh && \
+    echo '  PROTO_REMOVED="${TMP_URL#mysql://}"' >> /app/start.sh && \
+    echo '  CREDS_PART="${PROTO_REMOVED%@*}"' >> /app/start.sh && \
+    echo '  HOSTPATH_PART="${PROTO_REMOVED#*@}"' >> /app/start.sh && \
+    echo '  if [[ "$RAW_URL" == *"@"* ]]; then' >> /app/start.sh && \
+    echo '    FLYWAY_USER="${FLYWAY_USER:-${CREDS_PART%%:*}}"' >> /app/start.sh && \
+    echo '    FLYWAY_PASSWORD="${FLYWAY_PASSWORD:-${CREDS_PART#*:}}"' >> /app/start.sh && \
+    echo '  fi' >> /app/start.sh && \
+    echo '  # Split host:port/db' >> /app/start.sh && \
+    echo '  HOSTPORT="${HOSTPATH_PART%%/*}"' >> /app/start.sh && \
+    echo '  DBNAME="${HOSTPATH_PART#*/}"' >> /app/start.sh && \
+    echo '  HOSTNAME="${HOSTPORT%%:*}"' >> /app/start.sh && \
+    echo '  PORTPART="${HOSTPORT#*:}"' >> /app/start.sh && \
+    echo '  if [ "$HOSTPORT" = "$PORTPART" ]; then PORTPART="3306"; fi' >> /app/start.sh && \
+    echo '  DB_URL="jdbc:mysql://${HOSTNAME}:${PORTPART}/${DBNAME}"' >> /app/start.sh && \
     echo 'else' >> /app/start.sh && \
     echo '  DB_URL="jdbc:mysql://${MYSQLHOST}:${MYSQLPORT:-3306}/${MYSQLDATABASE}"' >> /app/start.sh && \
     echo 'fi' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
-    echo '# Run Flyway repair to fix checksum mismatches' >> /app/start.sh && \
-    echo '/app/flyway/flyway -url="$DB_URL" -user="${DB_USERNAME:-$MYSQLUSER}" -password="${DB_PASSWORD:-$MYSQLPASSWORD}" -locations=filesystem:/app/migrations repair || true' >> /app/start.sh && \
+    echo 'echo "Running Flyway repair against: $DB_URL"' >> /app/start.sh && \
+    echo '/app/flyway/flyway -url="$DB_URL" -user="$FLYWAY_USER" -password="$FLYWAY_PASSWORD" -locations=filesystem:/app/migrations repair || true' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
     echo '# Start the Spring Boot application' >> /app/start.sh && \
     echo 'java -Dserver.port=$PORT -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -jar app.jar' >> /app/start.sh && \
