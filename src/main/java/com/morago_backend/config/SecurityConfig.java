@@ -1,5 +1,8 @@
 package com.morago_backend.config;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -95,8 +98,32 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(@Value("${jwt.secret}") String base64Secret) {
-        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
+    public JwtDecoder jwtDecoder(@Value("${jwt.secret}") String secretFromConfig) {
+        byte[] keyBytes = null;
+        // Try standard Base64
+        try {
+            keyBytes = Decoders.BASE64.decode(secretFromConfig);
+        } catch (Exception ignore) {
+            // Try URL-safe Base64 ("-" and "_" characters)
+            try {
+                keyBytes = io.jsonwebtoken.io.Decoders.BASE64URL.decode(secretFromConfig);
+            } catch (Exception ignoreToo) {
+                // Fallback to raw string bytes
+                keyBytes = secretFromConfig.getBytes(StandardCharsets.UTF_8);
+            }
+        }
+
+        // Ensure key is at least 256 bits for HS256
+        if (keyBytes.length < 32) {
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                keyBytes = digest.digest(keyBytes);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("SHA-256 not available for JWT key derivation", e);
+            }
+        }
+
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
         return NimbusJwtDecoder.withSecretKey(key).build();
     }
 
