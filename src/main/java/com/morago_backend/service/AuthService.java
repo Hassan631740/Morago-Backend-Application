@@ -32,12 +32,26 @@ public class AuthService {
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        @Value("${security.jwt.secret}") String base64Secret,
-                       @Value("${security.jwt.expiration-ms:3600000}") long jwtExpirationMs) {
+                       @Value("${security.jwt.expiration-ms:3600000}") String jwtExpirationMsStr) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtSecret = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
-        this.jwtExpirationMs = jwtExpirationMs;
+        this.jwtExpirationMs = parseJwtExpirationMs(jwtExpirationMsStr);
+    }
+    
+    private long parseJwtExpirationMs(String value) {
+        try {
+            long expirationMs = Long.parseLong(value);
+            if (expirationMs <= 0) {
+                throw new IllegalArgumentException("JWT expiration must be greater than 0, got: " + expirationMs);
+            }
+            return expirationMs;
+        } catch (NumberFormatException e) {
+            System.err.println("ERROR: Invalid security.jwt.expiration-ms value. Expected a number but got: " + value);
+            System.err.println("Please set JWT_EXPIRATION_MS to a valid number (e.g., 3600000) in your Railway environment variables.");
+            throw new IllegalArgumentException("JWT_EXPIRATION_MS must be a valid number. Current value: " + value, e);
+        }
     }
 
     public String login(String phone, String password) {
