@@ -18,7 +18,7 @@ public class SocketIOConfig {
     private String host;
 
     @Value("${socketio.port}")
-    private int port;
+    private String portStr;
 
     @Value("${socketio.allowed-origins}")
     private String allowedOrigins;
@@ -28,12 +28,26 @@ public class SocketIOConfig {
     public SocketIOConfig(JwtDecoder jwtDecoder) {
         this.jwtDecoder = jwtDecoder;
     }
+    
+    private int getSocketPort() {
+        try {
+            int port = Integer.parseInt(portStr);
+            if (port <= 0 || port > 65535) {
+                throw new IllegalArgumentException("Port must be between 1 and 65535, got: " + port);
+            }
+            return port;
+        } catch (NumberFormatException e) {
+            System.err.println("ERROR: Invalid SOCKETIO_PORT value. Expected a number but got: " + portStr);
+            System.err.println("Please set SOCKETIO_PORT to a valid port number (e.g., 9092) in your Railway environment variables.");
+            throw new IllegalArgumentException("SOCKETIO_PORT must be a valid port number. Current value: " + portStr, e);
+        }
+    }
 
     @Bean
     public SocketIOServer socketIOServer() {
         com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
         config.setHostname(host);
-        config.setPort(port);
+        config.setPort(getSocketPort());
         config.setOrigin(allowedOrigins);
 
         SocketIOServer server = new SocketIOServer(config);
