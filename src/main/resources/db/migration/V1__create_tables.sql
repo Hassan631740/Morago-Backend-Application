@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    is_debtor BOOLEAN DEFAULT FALSE,
     image_id BIGINT,
     translator_profile_id BIGINT,
     user_profile_id BIGINT

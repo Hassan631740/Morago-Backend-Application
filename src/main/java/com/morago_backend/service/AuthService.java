@@ -26,15 +26,18 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecretKey jwtSecret;
+    private final long jwtExpirationMs;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       @Value("${security.jwt.secret}") String base64Secret) {
+                       @Value("${security.jwt.secret}") String base64Secret,
+                       @Value("${security.jwt.expiration-ms:3600000}") long jwtExpirationMs) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtSecret = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
+        this.jwtExpirationMs = jwtExpirationMs;
     }
 
     public String login(String phone, String password) {
@@ -48,7 +51,7 @@ public class AuthService {
                 .toList();
 
         long now = System.currentTimeMillis();
-        long exp = now + 3600000;
+        long exp = now + jwtExpirationMs;
 
         return Jwts.builder()
                 .setSubject(phone)
@@ -74,7 +77,6 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setIsActive(true);
-        user.setIsDebtor(false);
         
         // Add CLIENT role
         Set<UserRole> roles = new HashSet<>();
@@ -119,7 +121,6 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setIsActive(true);
-        user.setIsDebtor(false);
         
         // Add INTERPRETER role
         Set<UserRole> roles = new HashSet<>();
@@ -162,7 +163,7 @@ public class AuthService {
                 .toList();
 
         long now = System.currentTimeMillis();
-        long exp = now + 3600000; // 1 hour
+        long exp = now + jwtExpirationMs;
 
         return Jwts.builder()
                 .setSubject(user.getPhone())

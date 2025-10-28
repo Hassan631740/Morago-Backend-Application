@@ -25,6 +25,22 @@ public class UserRequestDTO {
     @NotBlank(message = "Password is required", groups = Create.class)
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
+    
+    @Override
+    public String toString() {
+        return "UserRequestDTO{" +
+                "phone='" + phone + '\'' +
+                ", password='***REDACTED***'" +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", balance=" + balance +
+                ", isActive=" + isActive +
+                ", role='" + role + '\'' +
+                ", translatorProfileId=" + translatorProfileId +
+                ", userProfileId=" + userProfileId +
+                ", roleIds=" + roleIds +
+                '}';
+    }
 
     @Schema(description = "User's first name", example = "John")
     @Size(max = 200, message = "First name cannot exceed 200 characters")
@@ -39,9 +55,6 @@ public class UserRequestDTO {
 
     @Schema(description = "Whether the user is active", example = "true")
     private Boolean isActive;
-
-    @Schema(description = "Whether the user is a debtor", example = "false")
-    private Boolean isDebtor;
 
     @Schema(description = "Role(s) assigned to the user", example = "CLIENT")
     private String role;

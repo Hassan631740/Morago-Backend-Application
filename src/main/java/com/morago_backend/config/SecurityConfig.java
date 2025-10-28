@@ -63,14 +63,14 @@ public class SecurityConfig {
                         // Allow authenticated users to access their own profile and change password
                         .requestMatchers("/api/users/deposit").hasRole("CLIENT")
                         .requestMatchers("/api/users/me", "/api/users/password", "/api/users/balance").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
-                        .requestMatchers("/api/users/**").hasRole("ADMINISTRATOR")
+                        .requestMatchers("/api/users/all/**").hasRole("ADMINISTRATOR") // Only list/all endpoints are admin-only
+                        .requestMatchers("/api/users/**").authenticated() // All other user endpoints accessible to authenticated users
                         .requestMatchers("/api/translator-profiles/**").hasAnyRole("INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/calls/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/ratings/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/deposits/**", "/api/withdrawals/**").hasRole("ADMINISTRATOR")
                         .requestMatchers("/api/categories/**", "/api/languages/**", "/api/themes/**").hasRole("ADMINISTRATOR")
-                        .requestMatchers("/api/debtors/**").hasRole("ADMINISTRATOR")
-                        .requestMatchers("/api/files/**", "/api/file-resources/**").hasRole("ADMINISTRATOR")
+                        .requestMatchers("/api/files/**", "/api/file-resources/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")
                         .requestMatchers("/api/uploads/themes/**").hasRole("ADMINISTRATOR")
                         .requestMatchers("/api/uploads/**").authenticated()
                         .requestMatchers("/api/notifications/**").hasAnyRole("CLIENT", "INTERPRETER", "ADMINISTRATOR")

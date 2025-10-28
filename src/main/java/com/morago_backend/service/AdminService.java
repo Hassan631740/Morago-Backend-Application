@@ -39,7 +39,6 @@ public class AdminService {
             user.setFirstName(dto.getFirstName());
             user.setLastName(dto.getLastName());
             user.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : true);
-            user.setIsDebtor(dto.getIsDebtor() != null ? dto.getIsDebtor() : false);
             user.setRoles(parseRolesFromRequest(dto));
 
             User saved = userRepository.save(user);
@@ -66,7 +65,6 @@ public class AdminService {
             if (dto.getFirstName() != null) existing.setFirstName(dto.getFirstName());
             if (dto.getLastName() != null) existing.setLastName(dto.getLastName());
             if (dto.getIsActive() != null) existing.setIsActive(dto.getIsActive());
-            if (dto.getIsDebtor() != null) existing.setIsDebtor(dto.getIsDebtor());
             if (dto.getRole() != null) existing.setRoles(parseRolesFromRequest(dto));
 
             User saved = userRepository.save(existing);
@@ -146,7 +144,6 @@ public class AdminService {
         dto.setRatings(user.getRatings());
         dto.setTotalRatings(user.getTotalRatings());
         dto.setIsActive(user.getIsActive());
-        dto.setIsDebtor(user.getIsDebtor());
         dto.setRoles(user.getRoles().stream().map(Enum::name).collect(Collectors.toSet()));
         dto.setCreatedAtDatetime(user.getCreatedAt());
         dto.setUpdatedAtDatetime(user.getUpdatedAt());

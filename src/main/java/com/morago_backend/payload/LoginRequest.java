@@ -8,5 +8,12 @@ import lombok.Setter;
 public class LoginRequest {
     private String phone;
     private String password;
-
+    
+    @Override
+    public String toString() {
+        return "LoginRequest{" +
+                "phone='" + phone + '\'' +
+                ", password='***REDACTED***'" +
+                '}';
+    }
 }

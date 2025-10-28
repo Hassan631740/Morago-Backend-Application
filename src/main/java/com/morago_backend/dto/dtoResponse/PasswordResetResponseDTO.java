@@ -17,8 +17,17 @@ public class PasswordResetResponseDTO {
     @Schema(description = "Phone number", example = "+1234567890")
     private String phone;
 
-    @Schema(description = "Reset code", example = "1234")
+    @Schema(description = "Reset code (for testing)", example = "1234")
     private Integer resetCode;
+
+    @Schema(description = "Verification token (returned after code verification)", example = "abc123...")
+    private String verificationToken;
+
+    @Schema(description = "Whether the code has been verified", example = "false")
+    private Boolean isVerified;
+
+    @Schema(description = "Expiration timestamp")
+    private LocalDateTime expiresAt;
 
     @Schema(description = "Status message", example = "Code verified")
     private String message;

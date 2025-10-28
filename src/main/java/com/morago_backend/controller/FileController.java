@@ -20,8 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/files")
-@Tag(name = "File Management - ADMIN", description = "Operations related to file management")
-@PreAuthorize("hasRole('ADMINISTRATOR')")
+@Tag(name = "File Management - All Roles", description = "Operations related to file management")
 @SecurityRequirement(name = "bearerAuth")
 public class FileController {
 
@@ -65,6 +64,7 @@ public class FileController {
     // ========== CREATE NEW FILE ==========
     @Operation(summary = "Create a new file")
     @PostMapping(consumes = {"multipart/form-data"})
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     public ResponseEntity<FileResponseDTO> create(
             @Valid @ModelAttribute FileRequestDTO dto,
             @RequestPart(required = false) MultipartFile file) {
@@ -85,6 +85,7 @@ public class FileController {
     // ========== UPDATE FILE ==========
     @Operation(summary = "Update a file")
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     public ResponseEntity<FileResponseDTO> update(
             @PathVariable Long id,
             @Valid @ModelAttribute FileRequestDTO dto,
@@ -105,6 +106,7 @@ public class FileController {
     // ========== DELETE FILE ==========
     @Operation(summary = "Delete a file")
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         try {
             logger.info("Deleting file id={}", id);

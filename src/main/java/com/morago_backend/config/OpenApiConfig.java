@@ -50,8 +50,8 @@ public class OpenApiConfig {
                     - **Call Records**: Track translation call sessions with automatic balance settlement
                     
                     ### Financial System:
-                    - **Deposits**: Automatic balance crediting with debt payment priority
-                    - **Withdrawals**: Balance verification with debtor restrictions
+                    - **Deposits**: Automatic balance crediting
+                    - **Withdrawals**: Balance verification
                     - **Transactions**: Unified tracking for all financial operations (DEPOSIT, WITHDRAWAL, CALL_PAYMENT, CALL_EARNING, COMMISSION, REFUND, ADJUSTMENT)
                     - **Debt System**: Automatic debt creation, tracking, and payment from deposits
                     
@@ -69,7 +69,7 @@ public class OpenApiConfig {
                     Use the **Authorize** button above to add your JWT token.
                     
                     ### Roles & Permissions:
-                    - **ADMINISTRATOR**: Full system access including deposits, withdrawals, debtor management
+                    - **ADMINISTRATOR**: Full system access including deposits, withdrawals
                     - **INTERPRETER**: Translator-specific features, can request withdrawals (if no unpaid debts)
                     - **CLIENT**: Customer-specific features, can make deposits
                     

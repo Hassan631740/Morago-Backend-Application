@@ -46,11 +46,6 @@ public class WithdrawalService {
             throw new IllegalArgumentException("Amount must be positive");
         }
 
-        // Check if user has unpaid debts
-        if (Boolean.TRUE.equals(user.getIsDebtor())) {
-            throw new RuntimeException("Cannot request withdrawal while having unpaid debts. Please settle your debts first.");
-        }
-
         Withdrawal w = new Withdrawal();
         w.setUserId(user.getId());
         w.setSum(sum);

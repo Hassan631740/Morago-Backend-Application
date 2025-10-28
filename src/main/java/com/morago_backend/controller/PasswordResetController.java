@@ -3,19 +3,15 @@ package com.morago_backend.controller;
 import com.morago_backend.dto.dtoResponse.PasswordResetResponseDTO;
 import com.morago_backend.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/password-resets")
-@PreAuthorize("hasAnyRole('CLIENT','INTERPRETER')")
-@SecurityRequirement(name = "bearerAuth")
-@Tag(name = "Password Reset Management - CLIENT/INTERPRETER", description = "APIs for managing password resets")
+@Tag(name = "Password Reset Management (Public)", description = "Public APIs for password reset flow - no authentication required")
 public class PasswordResetController {
 
     private static final Logger logger = LoggerFactory.getLogger(PasswordResetController.class);
@@ -26,7 +22,7 @@ public class PasswordResetController {
     }
 
     // ========== REQUEST RESET ==========
-    @Operation(summary = "Request password reset (hardcoded 4-digit code)")
+    @Operation(summary = "Request password reset (secure 4-digit code generated)")
     @PostMapping("/request")
     public ResponseEntity<PasswordResetResponseDTO> requestReset(@RequestParam String phone) {
         try {
@@ -53,21 +49,23 @@ public class PasswordResetController {
     }
 
     // ========== UPDATE PASSWORD ==========
-    @Operation(summary = "Update password after code verification")
+    @Operation(summary = "Update password after code verification (requires verification token)")
     @PostMapping("/update-password")
     public ResponseEntity<PasswordResetResponseDTO> updatePassword(
             @RequestParam String phone,
-            @RequestParam String newPassword) {
+            @RequestParam String newPassword,
+            @RequestParam String verificationToken) {
 
         // Validate request parameters
-        if (phone == null || phone.isBlank() || newPassword == null || newPassword.isBlank()) {
-            logger.warn("Invalid request: phone or newPassword is empty");
+        if (phone == null || phone.isBlank() || newPassword == null || newPassword.isBlank() || 
+            verificationToken == null || verificationToken.isBlank()) {
+            logger.warn("Invalid request: phone, newPassword, or verificationToken is empty");
             return ResponseEntity.badRequest().build(); // 400 BAD_REQUEST
         }
 
         try {
             // Call service to update password
-            PasswordResetResponseDTO dto = service.updatePasswordMinimal(phone, newPassword);
+            PasswordResetResponseDTO dto = service.updatePassword(phone, newPassword, verificationToken);
 
             // Return 200 OK with DTO
             return ResponseEntity.ok(dto);

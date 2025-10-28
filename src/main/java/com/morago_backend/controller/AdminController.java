@@ -74,7 +74,10 @@ public class AdminController {
     @PostMapping("/users")
     public ResponseEntity<UserResponseDTO> create(@Valid @RequestBody UserRequestDTO request) {
         try {
-            logger.info("Creating new user with data={}", request);
+            logger.info(
+                    "Creating new user with phone={} firstName={} lastName={} isActive={} role={}",
+                    request.getPhone(), request.getFirstName(), request.getLastName(), request.getIsActive(), request.getRole()
+            );
             UserResponseDTO created = service.create(request);
             URI location = ServletUriComponentsBuilder
                     .fromCurrentRequest()
@@ -93,7 +96,10 @@ public class AdminController {
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponseDTO> update(@PathVariable Long id, @Valid @RequestBody UserRequestDTO request) {
         try {
-            logger.info("Updating user id={} with data={}", id, request);
+            logger.info(
+                    "Updating user id={} with phone={} firstName={} lastName={} isActive={} role={}",
+                    id, request.getPhone(), request.getFirstName(), request.getLastName(), request.getIsActive(), request.getRole()
+            );
             UserResponseDTO updated = service.update(id, request);
             return ResponseEntity.ok(updated);
         } catch (Exception ex) {

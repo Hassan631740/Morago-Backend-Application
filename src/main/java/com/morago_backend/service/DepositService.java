@@ -2,11 +2,9 @@ package com.morago_backend.service;
 
 import com.morago_backend.dto.dtoRequest.DepositRequestDTO;
 import com.morago_backend.dto.dtoResponse.DepositResponseDTO;
-import com.morago_backend.entity.Debtor;
 import com.morago_backend.entity.Deposit;
 import com.morago_backend.entity.TransactionType;
 import com.morago_backend.entity.User;
-import com.morago_backend.repository.DebtorRepository;
 import com.morago_backend.repository.DepositRepository;
 import com.morago_backend.repository.UserRepository;
 import com.morago_backend.exception.ResourceNotFoundException;
@@ -29,16 +27,13 @@ public class DepositService {
     private final SocketIOServer socketServer;
     private final UserRepository userRepository;
     private final TransactionService transactionService;
-    private final DebtorRepository debtorRepository;
 
     public DepositService(DepositRepository depositRepository, SocketIOServer socketServer, 
-                         UserRepository userRepository, TransactionService transactionService,
-                         DebtorRepository debtorRepository) {
+                         UserRepository userRepository, TransactionService transactionService) {
         this.depositRepository = depositRepository;
         this.socketServer = socketServer;
         this.userRepository = userRepository;
         this.transactionService = transactionService;
-        this.debtorRepository = debtorRepository;
     }
 
     // ====== CREATE ======
@@ -51,8 +46,8 @@ public class DepositService {
             Deposit saved = depositRepository.save(deposit);
 
             if ("APPROVED".equalsIgnoreCase(saved.getStatus())) {
-                // Process deposit with automatic debt payment
-                processDepositWithDebtPayment(saved);
+                // Process deposit and credit user balance
+                processDeposit(saved);
             }
 
             socketServer.getBroadcastOperations().sendEvent("depositCreated", saved);
@@ -110,8 +105,8 @@ public class DepositService {
             Deposit saved = depositRepository.save(existing);
 
             if (!"APPROVED".equalsIgnoreCase(previousStatus) && "APPROVED".equalsIgnoreCase(saved.getStatus())) {
-                // Process deposit with automatic debt payment
-                processDepositWithDebtPayment(saved);
+                // Process deposit and credit user balance
+                processDeposit(saved);
             }
 
             socketServer.getBroadcastOperations().sendEvent("depositUpdated", saved);
@@ -179,137 +174,32 @@ public class DepositService {
     }
     
     /**
-     * Process deposit with automatic debt payment
-     * If user has debts, pay them off first before crediting balance
+     * Process deposit and credit user balance
      */
-    private void processDepositWithDebtPayment(Deposit deposit) {
+    private void processDeposit(Deposit deposit) {
         User user = userRepository.findById(deposit.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + deposit.getUserId()));
         
-        // Get all unpaid debts for this user
-        List<Debtor> unpaidDebts = debtorRepository.findByUserIdAndPaidFalse(user.getId());
+        // Credit deposit amount to user balance
+        BigDecimal newBalance = user.getBalance() == null ? deposit.getSum() : user.getBalance().add(deposit.getSum());
+        user.setBalance(newBalance);
         
-        BigDecimal remainingAmount = deposit.getSum();
-        BigDecimal totalDebtPaid = BigDecimal.ZERO;
-        
-        if (!unpaidDebts.isEmpty()) {
-            logger.info("User {} has {} unpaid debt(s). Processing automatic payment...", user.getId(), unpaidDebts.size());
-            
-            for (Debtor debt : unpaidDebts) {
-                if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    break; // No more money to pay debts
-                }
-                
-                BigDecimal debtAmount = debt.getDebtAmount() != null ? debt.getDebtAmount() : BigDecimal.ZERO;
-                
-                if (debtAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                    // Debt already paid, mark as paid
-                    debt.setPaid(true);
-                    debtorRepository.save(debt);
-                    continue;
-                }
-                
-                if (remainingAmount.compareTo(debtAmount) >= 0) {
-                    // Can pay off this debt completely
-                    remainingAmount = remainingAmount.subtract(debtAmount);
-                    totalDebtPaid = totalDebtPaid.add(debtAmount);
-                    
-                    debt.setDebtAmount(BigDecimal.ZERO);
-                    debt.setPaid(true);
-                    debtorRepository.save(debt);
-                    
-                    // Create transaction record for debt payment
-                    transactionService.createDetailedTransaction(
-                        user,
-                        TransactionType.REFUND, // Using REFUND type for debt payment
-                        debtAmount,
-                        "COMPLETED",
-                        "Debt payment from deposit (fully paid)",
-                        debt.getId(),
-                        debt.getAccountHolder(),
-                        debt.getBankName(),
-                        null,
-                        "Debt ID: " + debt.getId() + ", from Deposit ID: " + deposit.getId()
-                    );
-                    
-                    logger.info("Debt id={} fully paid: amount={}", debt.getId(), debtAmount);
-                } else {
-                    // Partial payment
-                    BigDecimal partialPayment = remainingAmount;
-                    totalDebtPaid = totalDebtPaid.add(partialPayment);
-                    
-                    debt.setDebtAmount(debtAmount.subtract(partialPayment));
-                    debtorRepository.save(debt);
-                    
-                    // Create transaction record for partial debt payment
-                    transactionService.createDetailedTransaction(
-                        user,
-                        TransactionType.REFUND, // Using REFUND type for debt payment
-                        partialPayment,
-                        "COMPLETED",
-                        "Partial debt payment from deposit",
-                        debt.getId(),
-                        debt.getAccountHolder(),
-                        debt.getBankName(),
-                        null,
-                        "Debt ID: " + debt.getId() + ", Partial payment: " + partialPayment + ", Remaining debt: " + debt.getDebtAmount()
-                    );
-                    
-                    remainingAmount = BigDecimal.ZERO;
-                    logger.info("Debt id={} partially paid: payment={}, remaining={}", 
-                               debt.getId(), partialPayment, debt.getDebtAmount());
-                    break;
-                }
-            }
-            
-            // Update user.isDebtor flag
-            boolean hasRemainingDebts = debtorRepository.existsByUserIdAndPaidFalse(user.getId());
-            user.setIsDebtor(hasRemainingDebts);
-            
-            logger.info("Total debt paid: {}, Remaining deposit amount: {}", totalDebtPaid, remainingAmount);
-        }
-        
-        // Credit remaining amount to user balance
-        if (remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal newBalance = user.getBalance() == null ? remainingAmount : user.getBalance().add(remainingAmount);
-            user.setBalance(newBalance);
-            
-            // Create transaction record for deposit (only remaining amount)
-            transactionService.createDetailedTransaction(
-                user,
-                TransactionType.DEPOSIT,
-                remainingAmount,
-                "COMPLETED",
-                totalDebtPaid.compareTo(BigDecimal.ZERO) > 0 ? 
-                    "Deposit approved (after paying debts: " + totalDebtPaid + ")" : 
-                    "Deposit approved and credited to account",
-                deposit.getId(),
-                deposit.getAccountHolder(),
-                deposit.getBankName(),
-                null,
-                "Deposit ID: " + deposit.getId()
-            );
-        } else {
-            // All deposit used for debt payment
-            logger.info("Entire deposit amount used for debt payment. No balance credited.");
-            
-            // Still create a transaction record showing the deposit was received
-            transactionService.createDetailedTransaction(
-                user,
-                TransactionType.DEPOSIT,
-                deposit.getSum(),
-                "COMPLETED",
-                "Deposit received (fully applied to debt payment: " + totalDebtPaid + ")",
-                deposit.getId(),
-                deposit.getAccountHolder(),
-                deposit.getBankName(),
-                null,
-                "Deposit ID: " + deposit.getId() + ", All amount used for debt payment"
-            );
-        }
+        // Create transaction record for deposit
+        transactionService.createDetailedTransaction(
+            user,
+            TransactionType.DEPOSIT,
+            deposit.getSum(),
+            "COMPLETED",
+            "Deposit approved and credited to account",
+            deposit.getId(),
+            deposit.getAccountHolder(),
+            deposit.getBankName(),
+            null,
+            "Deposit ID: " + deposit.getId()
+        );
         
         userRepository.save(user);
-        logger.info("Deposit processed: depositAmount={}, debtPaid={}, balanceCredited={}", 
-                   deposit.getSum(), totalDebtPaid, remainingAmount);
+        logger.info("Deposit processed: depositAmount={}, balanceCredited={}", 
+                   deposit.getSum(), deposit.getSum());
     }
 }

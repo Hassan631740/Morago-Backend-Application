@@ -30,6 +30,15 @@ public class PasswordResetRequestDTO {
     @Schema(description = "New password (only for reset step)", example = "MyNewPassword123")
     @NotBlank(message = "New password is required", groups = Verify.class)
     private String newPassword;
+    
+    @Override
+    public String toString() {
+        return "PasswordResetRequestDTO{" +
+                "phone='" + phone + '\'' +
+                ", resetCode=" + resetCode +
+                ", newPassword='***REDACTED***'" +
+                '}';
+    }
 }
 
 

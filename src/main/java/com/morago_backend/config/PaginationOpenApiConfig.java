@@ -19,7 +19,21 @@ import org.springframework.context.annotation.Configuration;
         description = """
             ## Pagination and Filtering API Documentation
             
-            This API supports advanced pagination and filtering capabilities for all GET endpoints.
+            This API supports advanced pagination and filtering capabilities for SELECT GET endpoints only.
+            Not all endpoints support pagination. Check individual endpoint documentation for details.
+            
+            ### Endpoints with Pagination Support
+            - `/api/admin/users` - Get all users (admin only)
+            - `/api/translator-profiles` - Get all translator profiles
+            - `/api/languages` - Get all languages
+            - `/api/categories` - Get all categories
+            
+            ### Endpoints WITHOUT Pagination
+            - `/api/files` - Returns all files
+            - `/api/themes` - Returns all themes
+            - `/api/ratings` - Returns all ratings
+            - `/api/calls` - Returns all call records
+            - Most other GET endpoints return simple lists
             
             ### Pagination Parameters
             - **page**: Page number (0-based, default: 0)
@@ -52,30 +66,28 @@ import org.springframework.context.annotation.Configuration;
             
             ### Example Usage
             
-            #### Basic Pagination
+            #### Basic Pagination (supported endpoints only)
             ```
-            GET /api/users?page=0&size=10&sortBy=username&sortDirection=asc
+            GET /api/admin/users?page=0&size=10&sortBy=username&sortDirection=asc
+            GET /api/languages?page=0&size=10&sortBy=name&sortDirection=asc
+            GET /api/categories?page=0&size=10&sortBy=name&sortDirection=asc
             ```
             
             #### Search with Pagination
             ```
-            GET /api/users?page=0&size=10&search=john
+            GET /api/admin/users?page=0&size=10&search=john
             ```
             
-            #### Filter by Role
+            #### Filter Parameters (where supported)
             ```
-            GET /api/users?page=0&size=10&filters[role]=ADMINISTRATOR
-            ```
-            
-            #### Date Range Filtering
-            ```
-            GET /api/users?page=0&size=10&dateFrom=2023-01-01T00:00:00&dateTo=2023-12-31T23:59:59
+            GET /api/admin/users?page=0&size=10&filters[role]=ADMINISTRATOR
+            GET /api/languages?page=0&size=10&search=korean
             ```
             
-            #### Complex Filtering
-            ```
-            GET /api/users?page=0&size=10&search=john&filters[role]=USER&filters[active]=true
-            ```
+            ### Important Notes
+            - Only endpoints documented as supporting pagination accept pagination parameters
+            - Endpoints returning simple lists ignore pagination parameters
+            - Always check the OpenAPI/Swagger documentation for each endpoint
             """,
         contact = @Contact(
             name = "Morago Development Team",

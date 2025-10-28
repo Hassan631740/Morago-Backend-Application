@@ -45,9 +45,6 @@ public class Transaction extends BaseEntity {
     @Column(name = "call_record_id")
     private Long callRecordId;
 
-    @Column(name = "debtor_id")
-    private Long debtorId;
-
     // Additional metadata
     @Column(name = "account_holder", length = 200)
     private String accountHolder;

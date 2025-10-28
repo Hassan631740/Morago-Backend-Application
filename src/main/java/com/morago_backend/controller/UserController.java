@@ -1,5 +1,6 @@
 package com.morago_backend.controller;
 
+import com.morago_backend.dto.dtoRequest.PasswordChangeRequestDTO;
 import com.morago_backend.dto.dtoRequest.UserRequestDTO;
 import com.morago_backend.dto.dtoResponse.UserResponseDTO;
 import com.morago_backend.service.UserService;
@@ -49,6 +50,20 @@ public class UserController {
         } catch (Exception e) {
             logger.error("Error updating current user profile", e);
             return ResponseEntity.status(500).build();
+        }
+    }
+
+    //=== Change password (for authenticated users) ===//
+    @Operation(summary = "Change password for authenticated users")
+    @PostMapping("/password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody PasswordChangeRequestDTO request) {
+        try {
+            logger.info("Changing password for authenticated user");
+            userService.changePassword(request);
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (Exception e) {
+            logger.error("Error changing password", e);
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 

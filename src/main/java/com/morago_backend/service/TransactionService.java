@@ -188,7 +188,6 @@ public class TransactionService {
                 .depositId(transaction.getDepositId())
                 .withdrawalId(transaction.getWithdrawalId())
                 .callRecordId(transaction.getCallRecordId())
-                .debtorId(transaction.getDebtorId())
                 .accountHolder(transaction.getAccountHolder())
                 .bankName(transaction.getBankName())
                 .accountNumber(transaction.getAccountNumber())

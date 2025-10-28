@@ -2,6 +2,7 @@ package com.morago_backend.service;
 
 import com.morago_backend.dto.dtoRequest.FilterRequest;
 import com.morago_backend.dto.dtoRequest.PaginationRequest;
+import com.morago_backend.dto.dtoRequest.PasswordChangeRequestDTO;
 import com.morago_backend.dto.dtoRequest.UserRequestDTO;
 import com.morago_backend.dto.dtoResponse.PagedResponse;
 import com.morago_backend.dto.dtoResponse.UserResponseDTO;
@@ -158,6 +159,35 @@ public class UserService {
             return new PagedResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements());
         } catch (Exception e) {
             logger.error("Error fetching users with pagination & filter", e);
+            throw e;
+        }
+    }
+
+    //=== Change password (for authenticated users) ===//
+    public void changePassword(PasswordChangeRequestDTO request) {
+        try {
+            User user = getCurrentUserEntity();
+            
+            // Verify current password
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                logger.warn("Password change failed for user id={}: incorrect current password", user.getId());
+                throw new RuntimeException("Current password is incorrect");
+            }
+            
+            // Validate new password is different from current password
+            if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+                logger.warn("Password change failed for user id={}: new password is the same as current", user.getId());
+                throw new RuntimeException("New password must be different from current password");
+            }
+            
+            // Update password
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userRepository.save(user);
+            
+            logger.info("Successfully changed password for user id={}", user.getId());
+            
+        } catch (Exception e) {
+            logger.error("Error changing password", e);
             throw e;
         }
     }

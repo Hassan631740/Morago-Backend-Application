@@ -22,8 +22,8 @@
 --
 -- -- Compose an idempotent insert using only `password` column
 -- SET @ins := CONCAT(
---     'INSERT INTO users (phone, password, first_name, last_name, is_active, is_debtor, created_at, updated_at) ',
---     'VALUES (''+10000000000'', ''$2a$10$7V3u5xzvLh7E5s7zX3wJROmYh3P2bJ8lqQbI1m0wU0QfF2ZQWw5rG'', ''Admin'', ''User'', TRUE, FALSE, NOW(), NOW()) ',
+--     'INSERT INTO users (phone, password, first_name, last_name, is_active, created_at, updated_at) ',
+--     'VALUES (''+10000000000'', ''$2a$10$7V3u5xzvLh7E5s7zX3wJROmYh3P2bJ8lqQbI1m0wU0QfF2ZQWw5rG'', ''Admin'', ''User'', TRUE, NOW(), NOW()) ',
 --     'ON DUPLICATE KEY UPDATE id = id'
 -- );
 -- PREPARE ins_stmt FROM @ins;

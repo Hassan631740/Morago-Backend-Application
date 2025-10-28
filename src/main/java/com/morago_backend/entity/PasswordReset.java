@@ -6,6 +6,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Setter
 @Getter
 @Entity
@@ -17,5 +19,14 @@ public class PasswordReset extends BaseEntity {
 
     @Column(name = "reset_code_int")
     private Integer resetCode;
+
+    @Column(name = "is_verified", nullable = false)
+    private Boolean isVerified = false;
+
+    @Column(name = "verification_token", length = 255)
+    private String verificationToken;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
 
 }

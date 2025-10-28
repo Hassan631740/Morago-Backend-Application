@@ -50,7 +50,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByDepositId(Long depositId);
     List<Transaction> findByWithdrawalId(Long withdrawalId);
     List<Transaction> findByCallRecordId(Long callRecordId);
-    List<Transaction> findByDebtorId(Long debtorId);
 
     // Calculate total by type for a user
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +

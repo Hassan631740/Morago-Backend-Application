@@ -29,5 +29,15 @@ public class ClientSignupRequest {
     @Schema(description = "User's last name", example = "Doe")
     @Size(max = 200, message = "Last name cannot exceed 200 characters")
     private String lastName;
+    
+    @Override
+    public String toString() {
+        return "ClientSignupRequest{" +
+                "phone='" + phone + '\'' +
+                ", password='***REDACTED***'" +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                '}';
+    }
 }
 

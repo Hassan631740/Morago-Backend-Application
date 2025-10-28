@@ -58,9 +58,6 @@ public class User implements UserDetails {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "is_debtor")
-    private Boolean isDebtor = false;
-
     @Column(name = "image_id")
     private Long imageId;
 
@@ -108,5 +105,24 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return this.isActive; // Use the isActive field from User entity
+    }
+    
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", phone='" + phone + '\'' +
+                ", password='***REDACTED***'" +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", balance=" + balance +
+                ", ratings=" + ratings +
+                ", totalRatings=" + totalRatings +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", isActive=" + isActive +
+                ", imageId=" + imageId +
+                ", roles=" + roles +
+                '}';
     }
 }

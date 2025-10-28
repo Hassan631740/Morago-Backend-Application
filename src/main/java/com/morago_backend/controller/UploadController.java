@@ -3,11 +3,9 @@ package com.morago_backend.controller;
 import com.morago_backend.entity.File;
 import com.morago_backend.entity.Theme;
 import com.morago_backend.entity.User;
-import com.morago_backend.entity.TranslatorProfile;
 import com.morago_backend.repository.FileRepository;
 import com.morago_backend.repository.ThemeRepository;
 import com.morago_backend.repository.UserRepository;
-import com.morago_backend.repository.TranslatorProfileRepository;
 import com.morago_backend.service.StorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -57,8 +55,7 @@ public class UploadController {
     private static final long MAX_DOCUMENT_SIZE = 10 * 1024 * 1024; // 10MB
 
     public UploadController(StorageService storageService, ThemeRepository themeRepository,
-                            UserRepository userRepository, FileRepository fileRepository,
-                            TranslatorProfileRepository translatorProfileRepository) {
+                            UserRepository userRepository, FileRepository fileRepository) {
         this.storageService = storageService;
         this.themeRepository = themeRepository;
         this.userRepository = userRepository;

@@ -26,7 +26,6 @@ public class TransactionResponse {
     private Long depositId;
     private Long withdrawalId;
     private Long callRecordId;
-    private Long debtorId;
     private String accountHolder;
     private String bankName;
     private String accountNumber;

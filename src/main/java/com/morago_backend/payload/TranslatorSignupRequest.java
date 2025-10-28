@@ -42,5 +42,18 @@ public class TranslatorSignupRequest {
     @Schema(description = "Translator's Korean language proficiency level", example = "Advanced")
     @Size(max = 200, message = "Level of Korean cannot exceed 200 characters")
     private String levelOfKorean;
+    
+    @Override
+    public String toString() {
+        return "TranslatorSignupRequest{" +
+                "phone='" + phone + '\'' +
+                ", password='***REDACTED***'" +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", dateOfBirth=" + dateOfBirth +
+                ", levelOfKorean='" + levelOfKorean + '\'' +
+                '}';
+    }
 }
 

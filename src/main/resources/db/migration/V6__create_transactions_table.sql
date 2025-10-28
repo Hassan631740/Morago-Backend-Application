@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     deposit_id BIGINT,
     withdrawal_id BIGINT,
     call_record_id BIGINT,
-    debtor_id BIGINT,
     
     -- Additional metadata
     account_holder VARCHAR(200),
